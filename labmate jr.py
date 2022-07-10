@@ -2,21 +2,26 @@ import tkinter
 from tkinter import *
 from tkinter import ttk
 
+# Import tkPDFViewer
 import customtkinter
+from PIL import ImageTk
 from tkcalendar import DateEntry
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
 main = Tk()
-main.title('Labmate')
+tk=Tk
+
+main.title('❤ &💡')
 main.geometry('1366x760')
 main.iconbitmap('')
 main.config(highlightthickness=2, bg='black')
 
 
 
-# bg= PhotoImage(file='lovelight.png')
+
+
 
 
 # frame1 ==========================QC FRAME
@@ -52,7 +57,7 @@ def add():
 
 def show_frame1():
     hide_frames()
-    frame1.pack(fill='both', expand=1)
+    frame1.grid(sticky='nswe')
 
     bench_combobox = customtkinter.CTkComboBox(frame1, values=bench)
     bench_combobox.grid(row=0, column=1, padx=5, sticky= 'nsew')
@@ -204,19 +209,77 @@ def show_frame6():
     frame6.pack(fill='both', expand=1)
 
 
+
+def reviews():
+    pass
+
+def eqa_frame():
+    frame7.forget()
+
+    def reports():
+             pass
+        #Listbox(framee7, width=100, height=40).grid(row=5,column=5)
+
+    #framee7= Frame(main).grid()
+
+def iqa_frame():
+    pass
+
+
+# noinspection PyTypeChecker
 def show_frame7():
     hide_frames()
-    frame7.pack(fill='both', expand=1)
+    frame7.place(x=0,y=0)
+    def reports():
+             pass
+    endo_eqa=(1,'immuno 19/9')
+    #Button(frame7, width=20, height=20, text='boy', command= eqa_frame).place(x=10,y=20)
+    def display(event):
+        if eqa_combo.get() == 'Chemistry':
+            trv_eqa.insert('', index=0, iid=0, text='EQA', values=endo_eqa)
+
+
+
+    eqa= ('Endoserology','Chemistry','UrineChemistry','Haematology','Infectives', 'HbA1c & Cardiac' 'IQA')
+
+    eqa_bt= customtkinter.CTkButton(frame7,width=20, height=50, text='EQA', text_font=('Chiller', -60),command=eqa_frame).place(x=10,y=5)
+    iqa_bt= customtkinter.CTkButton(frame7,width=20, height=50, text='IQA', text_font=('Chiller', -60),command=eqa_frame).place(x=150,y=5)
+    eqa_combo = customtkinter.CTkComboBox(frame7, width=300, values=eqa)
+    eqa_combo.place(x=10, y=100)
+    eqa_combo.bind("<<ComboboxSelected>>", display)
+    en="change of name receipt.pdf"
+    trv_eqa= ttk.Treeview(frame7, columns=(1), height=19,padding=5)
+    trv_eqa.place(x=10, y=130)
+    trv_eqa.heading('#0', text='EQA & IQA', anchor='w')
+    trv_eqa.column('#0', width=268, stretch=NO)
+
+
+
+    trv_eqa.insert('', index=0, iid=1, text='Endoserology', values='')
+    trv_eqa.insert('', index=1, iid=2, text='Chemistry', values='')
+    trv_eqa.insert('', index=2, iid=3, text='UrineChemisty', values='')
+    trv_eqa.insert('', index=3, iid=4, text='Haematology', values='')
+    trv_eqa.insert('', index=4, iid=5, text='Infectives', values='')
+    trv_eqa.insert('', index=5, iid=6, text='Hba1c & Cardiac', values='')
+    trv_eqa.insert('', index=6, iid=7, text='IQA', values='')
+    trv_eqa.insert('1', index=0, iid=8, text='20/1', values="C:\\Users\\DELL\\Documents\\Labmate\\change of name receipt.pdf")
+    trv_eqa.insert('1', index=1, iid=9, text='20/2', values='')
+    trv_eqa.insert('1', index=2, iid=10, text='20/3', values='')
+    trv_eqa.insert('1', index=3, iid=11, text='20/4', values='')
+    trv_eqa.insert('1', index=4, iid=12, text='20/5', values='')
+
+
+
 
 
 def hide_frames():
-    frame1.pack_forget()
-    frame2.pack_forget()
-    frame3.pack_forget()
-    frame4.pack_forget()
-    frame5.pack_forget()
-    frame6.pack_forget()
-    frame7.pack_forget()
+    frame1.grid_forget()
+    frame2.grid_forget()
+    frame3.grid_forget()
+    frame4.grid_forget()
+    frame5.grid_forget()
+    frame6.grid_forget()
+    frame7.grid_forget()
 
 
 # frame1 ==========================QC FRAME
@@ -232,7 +295,9 @@ frame5 = Frame(main, width=600, height=500, bg='white')
 
 frame6 = Frame(main, width=600, height=500, bg='white')
 
-frame7 = Frame(main, width=600, height=500, bg='white')
+frame7 = Canvas(main, width=1370, height=750, bg='white')
+bg= ImageTk.PhotoImage(file='qc.jpg')
+frame7.create_image(650,250,image =bg,)
 
 '''
 def clear():
@@ -245,16 +310,10 @@ def search():
     result_text.insert(0.0, data.content)
 '''
 
-'''
-imageL= Label(main, image=bg)
-imageL.pack()
-'''
+
 # canvas
 '''
 
-canvas = Canvas(main, width = 1360, height= 900, bd=0,highlightthickness=0)
-canvas.pack(fill='both', expand='True')
-canvas.create_image(0,0, image=bg, anchor='nw')
 
 '''
 
@@ -294,11 +353,7 @@ page_menu.add_command(label='Mail', command=show_frame6)
 page_menu.add_command(label='Calculator', command=show_frame7)
 
 '''
-#frames
 
-#frame1
-wrapper1= LabelFrame(main,text='Data screen')
-wrapper1.pack(fill='both', expand='yes',padx=0, ipady=0, pady=0)
 
 #treeview
 trv= ttk.Treeview(wrapper1, columns=(1,2,3,4,5,6),show='headings')
