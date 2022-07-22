@@ -4,6 +4,7 @@ import subprocess
 import tkinter
 from tkinter import *
 from tkinter import filedialog
+from tkinter import messagebox
 from tkinter import ttk
 
 import customtkinter
@@ -25,60 +26,85 @@ endo_machine = ["Unicel DXI", "Access", "Abbott"]
 chem_machine = ["AU 680", "BIORAD DJ"]
 haema_machine = ["Sysmex XN550", "Sysmex XN31", "Biorad DM", "Sebia", "BD Fascount"]
 
-endo_analyte = ['Free t4', 'TSH', 'free t3', 'Prolactin']
-au_analyte = ['Na', 'K', 'Cl']
+endo_analyte = ['All analytes', 'Free t4', 'TSH', 'free t3', 'Prolactin']
+au_analyte = ['All analytes', 'Na', 'K', 'Cl']
 dj_analyte = ['HbA1C', 'Hb Elect']
 xn550 = ['FBC']
 xn31 = ['Malaria Parasite']
 hb_analyte = ['Hb Elect', 'Hba1C']
 bdfasc = ['CD4']
 sebi = ['Hb Elect']
-days = ['AM', 'PM']
+days = ['DAY', 'NIGHT']
+'''
 conn= sqlite3.connect('clinicals.db')
 c= conn.cursor()
 c.execute('SELECT * FROM qc')
 rows=c.fetchall()
 conn.close()
-
+'''
 def show_frame1():
 
     hide_frames()
     frame1.grid(sticky='nswe')
+
+    def search():
+        def searchh():
+            conn= sqlite3.connect('clinicals.db')
+            c=conn.cursor()
+            query=f"SELECT * FROM qc WHERE date=?"
+            c.execute(query,(datee))
+            conn.commit()
+            conn.close()
+            
+        searcch = Tk()
+        searcch.title('Search by Date')
+        searcch.geometry('350x220')
+        searcch.iconbitmap('')
+        datee = DateEntry(searcch, variable=sel, selectmode='day', date_pattern="dd-mm-yyyy")
+        datee.grid(row=0, column=0)
+        customtkinter.CTkButton(searcch, text='Search', command=searchh)
+
+        searcch.mainloop()
+
 
     def update(rows):
         trv.delete(*trv.get_children())
         for i in rows:
             trv.insert('', 'end', values=i)
 
+    def reset():
+        conn = sqlite3.connect('clinicals.db')
+        c = conn.cursor()
+        query = "SELECT * FROM qc"
+        c.execute(query)
+        rows = c.fetchall()
+        update(rows)
+
     def update2():
         q = qc_management.get('1.0', END)
-        e = eqa_no_entry.get()
+        #e = eqa_no_entry.get()
         p = put_in_use.get('1.0', END)
         o = occurrences.get('1.0', END)
         dy = day.get()
         u = users.get()
 
         selected_iid = trv.focus()
-        item_index = trv.index(selected_iid)
+        item_index = trv.index(selected_iid)+1
+        if messagebox.askyesno('Confirm Update', 'Are you sure you want to update'):
+            conn= sqlite3.connect('clinicals.db')
+            c=conn.cursor()
+            query=f"UPDATE qc SET qc_management = ?, put_in_use=?,occurences=? WHERE rowid=?"
+            c.execute(query,(q,p,o,item_index))
+            conn.commit()
+            conn.close()
+            reset()
 
-        conn= sqlite3.connect('clinicals.db')
-        c=conn.cursor()
-        query=f"UPDATE qc SET qc_management = ?, put_in_use=?,occurences=? WHERE rowid={item_index}"
-        c.execute(query,(q,p,o))
-        
-        conn.commit()
-        conn.close()
         occurrences.delete('1.0', END)
         put_in_use.delete('1.0', END)
         qc_management.delete('1.0', END)
 
 
-
-
-
-
-
-    def pick_machine():
+    def pick_machine(e):
         if bench.get() == "Endoserology":
             machine.config(values=endo_machine)
             machine.current(0)
@@ -121,13 +147,12 @@ def show_frame1():
         d = date.get()
         b = bench.get()
         q = qc_management.get('1.0', END)
-        e = eqa_no_entry.get()
+        #e = eqa_no_entry.get()
         p = put_in_use.get('1.0', END)
         o = occurrences.get('1.0', END)
         dy = day.get()
         u = users.get()
-        bb = bias_l.get()
-        t = trend_l.get()
+
 
         conn = sqlite3.connect('clinicals.db')
         c = conn.cursor()
@@ -148,7 +173,7 @@ def show_frame1():
         machine.delete('0', END)
         analyte_combobox.delete('0', END)
         users.delete('0', END)
-        eqa_no_entry.delete('0', END)
+        #eqa_no_entry.delete('0', END)
         day.delete('0', END)
 
     def getrows(e):
@@ -164,18 +189,18 @@ def show_frame1():
 
 
     bench = ttk.Combobox(frame1, values=benchs)
-    bench.grid(row=0, column=1, padx=5, sticky='nswe')
+    bench.grid(row=0, column=0, padx=5, sticky='nswe')
     bench.bind("<<ComboboxSelected>>", pick_machine)
 
     machine = ttk.Combobox(frame1, values=[" "])
-    machine.grid(row=0, column=2, padx=5, sticky='nswe')
+    machine.grid(row=0, column=1, padx=5, sticky='nswe')
     machine.bind("<<ComboboxSelected>>", pick_analyte)
 
     analyte_combobox = ttk.Combobox(frame1, values=[" "])
-    analyte_combobox.grid(row=0, column=3, padx=5, sticky='nswe')
+    analyte_combobox.grid(row=0, column=2, padx=5, sticky='nswe')
 
-    day = ttk.Combobox(frame1, values=days, width=20, )
-    day.grid(row=0, column=4, padx=5, sticky='e')
+    day = ttk.Combobox(frame1, values=days, width=5)
+    day.grid(row=0, column=3,sticky='nswe')
 
     user = (
         'Fortune Nwosu',
@@ -190,9 +215,13 @@ def show_frame1():
         'Trainee')
 
     users = ttk.Combobox(frame1, values=user)
+    users.grid(row=0, column=7,sticky='e')
 
-    users.grid(row=0, column=5, sticky='nsew')
+    sel = StringVar()
+    date = DateEntry(frame1, variable=sel, selectmode='day', date_pattern="dd-mm-yyyy")
+    date.grid(row=0, column=9)
 
+    '''
     trend_l = customtkinter.CTkCheckBox(frame1, text="Trend", text_font=("Helvetica", -16))
     trend_l.grid(row=2, column=0, pady=20, padx=10, ipadx=27)
 
@@ -207,52 +236,66 @@ def show_frame1():
 
     random_l = customtkinter.CTkCheckBox(frame1, text="Random Error", text_font=("Helvetica", -16))
     random_l.grid(row=6, column=0, pady=10, padx=0)
-
-    qc_label = customtkinter.CTkLabel(frame1, text="Document root cause, troubleshooting and action taken(Where "
-                                                   "applicable)",
+    '''
+    qc_label = customtkinter.CTkLabel(frame1, text="QC issues",
                                       text_font=("Helvetica", -13))  # <- custom tuple-color
-    qc_label.grid(row=2, column=1, sticky='s')
-
-    qc_management = Text(frame1, width=75, height=6, bg='#cad5f2', fg='black')
-    qc_management.grid(row=2, column=1, columnspan=3, rowspan=4, sticky='w')
+    qc_label.grid(row=1, column=0, sticky='sew')
+    qc_management = Text(frame1, width=45, height=6, bg='#cad5f2', fg='black')
+    qc_management.grid(row=2, column=0, columnspan=2, padx=5, rowspan=4, sticky='w')
 
     put_in= customtkinter.CTkLabel(frame1, text="Items put in use", text_font=("Helvetica", -12))
-    put_in.grid(row=2, column=4, sticky='s')
-    put_in_use = Text(frame1, width=30, height=6, bg='#cad5f2', fg='black')
-    put_in_use.grid(row=2, column=4, rowspan=4, padx=10, sticky='e')
+    put_in.grid(row=1, column=2, sticky='s')
+    put_in_use = Text(frame1, width=20, height=6, bg='#cad5f2', fg='black')
+    put_in_use.grid(row=2, column=2, rowspan=4,padx=5, sticky='e')
 
-    occur= customtkinter.CTkLabel(frame1, text="Occurences",
-                                             text_font=("Helvetica", -13))  # <- custom tuple-color
-    occur.grid(row=2, column=5, sticky='se')
+    cali = customtkinter.CTkLabel(frame1, text="Day's Calibration", text_font=("Helvetica", -13))  # <- custom tuple-color
+    cali.grid(row=1, column=3, sticky='s')
+    calii = Text(frame1, width=15, height=6, bg='#cad5f2', fg='black')
+    calii.grid(row=2, column=3, rowspan=4,padx=5, sticky='w')
 
-    occurrences = Text(frame1, width=20, height=6, bg='#cad5f2', fg='black')
-    occurrences.grid(row=2, column=5, rowspan=4, sticky='')
+    new_qccal= customtkinter.CTkLabel(frame1, text="New QC/Calibrators Loaded", text_font=("Helvetica", -12))
+    new_qccal.grid(row=1, column=4, sticky='s')
+    new_qccale = Text(frame1, width=20, height=6, bg='#cad5f2', fg='black')
+    new_qccale.grid(row=2, column=4,columnspan=3, rowspan=4, sticky='w')
 
+    occur= customtkinter.CTkLabel(frame1, text="", text_font=("Helvetica", -13))  # <- custom tuple-color
+    occur.grid(row=1, column=6, sticky='se')
+    occur= customtkinter.CTkLabel(frame1, text="Occurences", text_font=("Helvetica", -13))  # <- custom tuple-color
+    occur.grid(row=1, column=7, sticky='se')
+    occurrences = Text(frame1, width=25, height=6, bg='#cad5f2', fg='black')
+    occurrences.grid(row=2, column=7, rowspan=4,sticky='w')
+
+
+    ''' 
     customtkinter.CTkLabel(frame1, text="Acceptable", text_font=("Helvetica", -16)).grid(row=6, column=1,
-                                                                                         sticky='w')
-
+                                                                                    sticky='w')
     eqa_no_entry = customtkinter.CTkEntry(frame1, width=10, placeholder_text="EQA CYCLE/SAMPLE USED TO VALIDATE")
-    eqa_no_entry.grid(row=5, column=1, sticky='we', ipadx=100)
+    eqa_no_entry.grid(row=6, column=1, sticky='we', ipadx=100)'''
 
-    add_bt = customtkinter.CTkButton(frame1, text="ADD", text_font=("Helvetica", -16),command=add)
-    add_bt.grid(row=6, column=5)
-
-    qc_switch = customtkinter.CTkSwitch(frame1, text="QC PENDING")
-    qc_switch.grid(row=5, column=5)
-
-    sel = StringVar()
-
-    date = DateEntry(frame1, variable=sel, selectmode='day', date_pattern="dd-mm-yyyy")
-    date.grid(row=0, column=0)
 
     var1 = tkinter.IntVar(value=0)
-
+    '''
+    qc_switch = customtkinter.CTkSwitch(frame1, text="QC PENDING")
+    qc_switch.grid(row=6, column=8)
     eqa_radio1 = customtkinter.CTkRadioButton(master=frame1, variable=var1,
-                                              value=0, text="yes", text_font=("Helvetica", -16))
-    eqa_radio1.grid(row=6, column=1, ipadx=65)
+                                              value=0, text="yes", text_font=("Helvetica", -16))'''
 
-    eqa_radio2 = customtkinter.CTkRadioButton(frame1, variable=var1, value=1, text="no", text_font=("Helvetica", -16))
-    eqa_radio2.grid(row=6, column=1)
+
+    add_bt = customtkinter.CTkButton(frame1, text="ADD", text_font=("Helvetica", -16),command=add)
+    add_bt.grid(row=2, column=9,padx=5)
+
+    update_bt = customtkinter.CTkButton(frame1, text="UPDATE", command=update2)
+    update_bt.grid(row=3, column=9,padx=5)
+
+    search_bt = customtkinter.CTkButton(frame1, text="SEARCH", command=search)
+    search_bt.grid(row=4, column=9,padx=5)
+
+    #customtkinter.CTkLabel(frame1, text='❤ &💡', text_font=("Chiller", -15)).grid(row=9, column=9, padx=15,
+                                      #                                            pady=30, sticky='s')
+    #eqa_radio1.grid(row=7, column=1, ipadx=65)
+
+    #eqa_radio2 = customtkinter.CTkRadioButton(frame1, variable=var1, value=1, text="no", text_font=("Helvetica", -16))
+    #eqa_radio2.grid(row=7, column=2)
 
     # treeview
     # treeview styling
@@ -261,13 +304,10 @@ def show_frame1():
     style.configure('Treeview.Heading', background='cad5f2', foreground='black')
     style.configure('Treeview', fieldbackground='#cad5f2',background='#cad5f2')
     style.configure('DateEntry', fieldbackground='#cad5f2', foreground='black')
-
-
-
     style.map('Treeview.Heading', background=[('selected','yellow')])
 
-    trv = ttk.Treeview(frame1, columns=('1', '2', '3', '4', '5', '6','7'), height=15, show='headings')
-    trv.grid(row=8, column=0, rowspan=6, columnspan=6, padx=8,  sticky='nswe')
+    trv = ttk.Treeview(frame1, columns=('1', '2', '3', '4', '5', '6','7'), height=26, show='headings')
+    trv.grid(row=6, column=0, rowspan=5, columnspan=10, padx=5,pady=10,sticky='nswe')
     #column
 
     trv.column("1", stretch=NO, minwidth=70, width=70)
@@ -286,41 +326,33 @@ def show_frame1():
     trv.heading(6, text="day")
     trv.heading(7, text="user")
 
-
-
-
-
-    trv.bind('<Double -1>', getrows)
-    update(rows)
-
-
-
-
-
-
     # scrollbar
     scrollbary = Scrollbar(frame1)
-    scrollbary.grid(row=8, column=5, rowspan=6, sticky='ens')
+    scrollbary.grid(row=6, column=9, rowspan=5,pady=10,padx=5, sticky='ens')
     scrollbary.config(command=trv.yview)
     trv.configure(yscrollcommand=scrollbary.set)
 
-    update_bt = customtkinter.CTkButton(frame1, text="Update", command=update2)
-    update_bt.grid(row=14, column=2, pady=10)
-
-    del_bt = customtkinter.CTkButton(frame1, text="Delete", command=add)
-    del_bt.grid(row=14, column=5, padx=5)
-
-    customtkinter.CTkLabel(frame1, text='❤ &💡', text_font=("Chiller", -15)).grid(row=15, column=9, padx=15,
-                                                                                  pady=30, sticky='s')
-
-    # backend
 
 
+    conn = sqlite3.connect('clinicals.db')
+    c = conn.cursor()
+    query = "SELECT * FROM qc"
+    c.execute(query)
+    rows = c.fetchall()
+    update(rows)
+    trv.bind('<Double -1>', getrows)
 
 def show_frame2():
     hide_frames()
-    frame2.pack(fill='both', expand=1)
+    frame2.grid(sticky='')
 
+    framee2=Frame(frame2, relief='raised', background='yellow')
+    framee2.grid(row=3, column=0, rowspan=5, columnspan=3, sticky='nswe')
+    Label(frame2, text='Calculator', width=50, height=3, font=13).grid(row=1, column=0)
+    Button(framee2, text='Conversion',width=50, height=5).grid(row=2, column=0)
+    Button(framee2, text='Derived results', width=50, height=5,).grid(row=3, column=0)
+    Button(framee2, text='Dilutions', width=50, height=5).grid(row=4, column=0)
+    #Button(framee2,width=30, height=30,).grid(row=2, column=6)
 
 def show_frame3():
     hide_frames()
@@ -525,13 +557,10 @@ def hide_frames():
     frame5.grid_forget()
     frame6.grid_forget()
     frame7.grid_forget()
-
-
 # frame1 ==========================QC FRAME
 frame1 = Frame(main, width=600, height=500, bg='#758fd2')
 
 #frame1.create_image(0,0, image=bgg, anchor='nw')
-
 frame2 = Frame(main, width=600, height=500, bg='green')
 
 frame3 = Frame(main, width=600, height=500, bg='yellow')
@@ -542,9 +571,9 @@ frame5 = Frame(main, width=600, height=500, bg='white')
 
 frame6 = Frame(main, width=600, height=500, bg='white')
 
-frame7 = Canvas(main, width=1370, height=750, bg='white')
+frame7 = Canvas(main, width=1370, height=750,bg='white')
 bg = ImageTk.PhotoImage(file='qcc.png')
-frame7.create_image(650, 250, image=bg, )
+frame7.create_image(650, 250, image=bg)
 
 '''
 def clear():
@@ -585,7 +614,7 @@ file_menu.add_command(label='Exit', command=show_frame)
 page_menu = Menu(my_menu, tearoff=False)
 my_menu.add_cascade(label='Pages', menu=page_menu)
 page_menu.add_command(label='QC...', command=show_frame1)
-page_menu.add_command(label='Reagent Log', command=show_frame2)
+page_menu.add_command(label='Calculator', command=show_frame2)
 page_menu.add_command(label='Instrument', command=show_frame3)
 page_menu.add_command(label='Search', command=show_frame4)
 page_menu.add_command(label='LIS', command=show_frame5)
